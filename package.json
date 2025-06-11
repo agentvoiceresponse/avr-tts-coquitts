@@ -1,0 +1,37 @@
+{
+  "name": "avr-tts-coquitts",
+  "version": "1.0.0",
+  "author": "Agent Voice Response <info@agentvoiceresponse.com>",
+  "description": "This repository provides a text-to-speech service using Coqui TTS API integrated with the Agent Voice Response system.",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "node .",
+    "start:dev": "nodemon --inspect ./index.js",
+    "dc:build": "docker build --platform=linux/amd64 -t agentvoiceresponse/avr-tts-coquitts:latest -t agentvoiceresponse/avr-tts-coquitts:${npm_package_version} .",
+    "dc:push": "docker push agentvoiceresponse/avr-tts-coquitts:latest && docker push agentvoiceresponse/avr-tts-coquitts:${npm_package_version}"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/agentvoiceresponse/avr-tts-coquitts.git"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  },
+  "contributors": [
+    {
+      "name": "Giuseppe Careri",
+      "email": "info@gcareri.com",
+      "url": "https://github.com/gcareri"
+    },
+    {
+      "name": "Denis Bled",
+      "email": "denis.bled@newmips.com",
+      "url": "https://github.com/newmips"
+    }
+  ]
+}
