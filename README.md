@@ -6,17 +6,36 @@
 [![Ko-fi](https://img.shields.io/badge/Support%20us%20on-Ko--fi-ff5e5b.svg)](https://ko-fi.com/agentvoiceresponse)
 
 
-This project demonstrates the integration of **Agent Voice Response** with **CoquiTTS Text-to-Speech (TTS)**. The application sets up an Express.js server that accepts a text string from a client via HTTP POST requests, converts the text into speech using CoquiTTS, and streams the audio back to the client in real-time.
+This project demonstrates the integration of **Agent Voice Response** with **CoquiTTS Text-to-Speech (TTS)** localy or remotely. The application sets up an Express.js server that accepts a text string from a client via HTTP POST requests, converts the text into speech using CoquiTTS, and streams the audio back to the client in real-time.
 
 ## Prerequisites
 
 To run this project, you will need:
 
 1. **Node.js** and **npm** installed.
-2. An **OpenAI account** with access to their Text-to-Speech API.
-3. An **API Key** from OpenAI with the necessary permissions for Text-to-Speech API.
+2. An instance of **Coqui AI TTS API** for which we provide local setup instructions (a minimum of **10 to 12Gb** disk space is required).
 
-## Setup
+
+## Setup Coqui AI TTS
+
+First of all, you will need to have an instance of CoquiAI TTS API running.
+
+Simply run the following command:
+
+```bash
+docker run --rm -it -p 5002:5002 --entrypoint /bin/bash ghcr.io/coqui-ai/tts-cpu
+python3 TTS/server/server.py --list_models #To get the list of available models
+python3 TTS/server/server.py --model_name tts_models/en/vctk/vits # To start a server
+```
+
+When getting the list of models, you will be able to choose the suitable model for your language. Then replace ```tts_models/en/vctk/vits``` in last instruction with your selected model.
+
+For instance, you can use ```tts_models/fr/mai/tacotron2-DDC``` for french language.
+
+Please note that Coqui AI TTS may take some minutes to start...
+
+
+## Setup AVR CoquiTTS
 
 ### 1. Clone the Repository
 
@@ -41,7 +60,7 @@ PORT=6032                             # Server port (default: 6032)
 
 ## How It Works
 
-The application accepts a text input from the client via an HTTP POST request to the `/text-to-speech-stream` route, converts the text into speech using **CoquiTTS Text-to-Speech**, and streams the resulting audio back in WAV format, suitable for integration with **Asterisk Audio Socket**.
+The application accepts a text input from the client via an HTTP POST request to the `/text-to-speech-stream` route, converts the text into speech using **CoquiTTS Text-to-Speech**, and streams the resulting audio back in WAV format (l16), suitable for integration with **Asterisk Audio Socket**.
 
 ### Key Components
 
@@ -68,7 +87,7 @@ For development with auto-reload:
 npm run start:dev
 ```
 
-The server will start and listen on the port defined in the environment variable or default to `6007`.
+The server will start and listen on the port defined in the environment variable or default to `6032`.
 
 ### Sending a Text Request
 
@@ -82,11 +101,53 @@ curl -X POST http://localhost:6032/text-to-speech-stream \
 
 The audio response will be saved in `response.wav` in WAV format.
 
+
+## Setup Coqui services in AVR-Infra
+
+
+Modify "docker-compose.yaml" file to include the 2 following services for TTS:
+
+```bash
+  avr-tts-coquitts:
+    image: agentvoiceresponse/ave-tts-coquitts
+    platform: linux/x86_64
+    container_name: avr-tts-coquitts
+    restart: always
+    environment:
+      - PORT=6032
+    ports:
+      - 6032:6032
+    networks:
+      - avr
+
+  avr-coqui-ai-tts:
+    image: ghcr.io/coqui-ai/tts-cpu
+    platform: linux/x86_64
+    container_name: avr-coqui-ai-tts
+    entrypoint: "python3 TTS/server/server.py --model_name tts_models/en/vctk/vits"
+    restart: always
+    environment:
+      - PORT=5002
+    ports:
+      - 5002:5002
+    networks:
+      - avr
+```
+
+Same has before, replace model name ``tts_models/en/vctk/vits``` with your favourite one.
+
+Please make sure, your .env variables are pointing to TTS URL:
+
+```bash
+TTS_URL=http://avr-tts-coquitts:6032/text-to-speech-stream
+```
+
+
 ## Contributors
 
 We would like to express our gratitude to all the contributors who have helped make this project possible:
 
-- [Denis Bled](https://github.com/newmips) - For their valuable contributions and support
+- [Denis Bled & Yike Ouyang](https://github.com/newmips) - For their valuable contributions and support
 
 
 ## Support & Community
