@@ -1,8 +1,8 @@
 # Agent Voice Response - CoquiTTS Text-to-Speech Integration
 
 [![Discord](https://img.shields.io/discord/1347239846632226998?label=Discord&logo=discord)](https://discord.gg/DFTU69Hg74)
-[![GitHub Repo stars](https://img.shields.io/github/stars/agentvoiceresponse/avr-tts-google-cloud-tts?style=social)](https://github.com/agentvoiceresponse/avr-tts-google-cloud-tts)
-[![Docker Pulls](https://img.shields.io/docker/pulls/agentvoiceresponse/avr-tts-google-cloud-tts?label=Docker%20Pulls&logo=docker)](https://hub.docker.com/r/agentvoiceresponse/avr-tts-google-cloud-tts)
+[![GitHub Repo stars](https://img.shields.io/github/stars/agentvoiceresponse/avr-tts-coquitts?style=social)](https://github.com/agentvoiceresponse/avr-tts-coquitts)
+[![Docker Pulls](https://img.shields.io/docker/pulls/agentvoiceresponse/avr-tts-coquitts?label=Docker%20Pulls&logo=docker)](https://hub.docker.com/r/agentvoiceresponse/avr-tts-coquitts)
 [![Ko-fi](https://img.shields.io/badge/Support%20us%20on-Ko--fi-ff5e5b.svg)](https://ko-fi.com/agentvoiceresponse)
 
 
