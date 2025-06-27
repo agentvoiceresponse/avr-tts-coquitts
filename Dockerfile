@@ -1,5 +1,8 @@
 FROM node:20-alpine As development
 
+# Install ffmpeg
+RUN apk add --no-cache ffmpeg
+
 WORKDIR /usr/src/app
 
 COPY package*.json ./
@@ -11,6 +14,9 @@ RUN npm ci --only=production && npm cache clean --force
 ###################
 
 FROM node:20-alpine As build
+
+# Install ffmpeg
+RUN apk add --no-cache ffmpeg
 
 WORKDIR /usr/src/app
 

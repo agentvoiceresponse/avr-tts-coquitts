@@ -1,56 +1,86 @@
-const express = require("express");
-const { Readable } = require("stream");
-
-require("dotenv").config();
-
-const DEFAULT_PORT = 6032;
+const express = require('express');
+const fetch = require('node-fetch');
+const { spawn } = require('child_process');
 
 const app = express();
+
 app.use(express.json());
 
 const handleTextToSpeech = async (req, res) => {
-  const { text, voice = "alloy" } = req.body;
-
-  console.log(`[${new Date().toISOString()}] Received TTS request`);
-  console.log(
-    `Text: ${
-      text ? text.slice(0, 50) + (text.length > 50 ? "..." : "") : "N/A"
-    }`
-  );
-  console.log(`Voice: ${voice}`);
-
+  const { text } = req.body;
   if (!text) {
-    console.warn(`[${new Date().toISOString()}] No text provided in request`);
-    return res.status(400).json({ message: "Text is required" });
+    return res.status(400).json({ message: 'Text is required' });
   }
 
-  res.setHeader("Content-Type", "audio/wav");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("Connection", "keep-alive");
-
   try {
-    const response = await fetch(
-      `https://api.coqui.ai/v1/tts?text=${encodeURIComponent(
-        text
-      )}&voice=${voice}`
-    );
-    const audioBuffer = await response.arrayBuffer();
-    const audioStream = Readable.from(Buffer.from(audioBuffer));
-    audioStream.pipe(res);
+    const params = new URLSearchParams({ text });
+
+    // Appel API TTS (le flux audio)
+    const response = await fetch(`${process.env.COQUI_AI_TTS_URL}`, {
+      method: 'POST',
+      body: params,
+    });
+
+    if (!response.ok) {
+      return res.status(response.status).json({ message: 'Error from TTS API' });
+    }
+
+    // Headers réponse HTTP
+    res.writeHead(200, {
+      'Content-Type': 'audio/wav',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Transfer-Encoding': 'chunked',
+    });
+
+    // Lancer ffmpeg en mode streaming
+    // Input : stdin (flux de l'API)
+    // Output : stdout (flux converti)
+    const ffmpeg = spawn('ffmpeg', [
+      '-i', 'pipe:0',        // Input depuis stdin
+      '-ar', '8000',         // Sample rate 8000 Hz
+      '-ac', '1',            // 1 channel (mono)
+      '-f', 'wav',           // Format WAV
+      '-acodec', 'pcm_s16le' // PCM 16 bits little endian
+      , 'pipe:1'             // Output vers stdout
+    ]);
+
+    // Gestion erreur ffmpeg
+    ffmpeg.stderr.on('data', (data) => {
+      console.error(`ffmpeg stderr: ${data.toString()}`);
+    });
+
+    ffmpeg.on('error', (err) => {
+      console.error('ffmpeg process error:', err);
+      if (!res.headersSent) {
+        res.status(500).json({ message: 'ffmpeg error' });
+      }
+    });
+
+    ffmpeg.on('close', (code) => {
+      if (code !== 0) {
+        console.error(`ffmpeg exited with code ${code}`);
+      }
+      res.end();
+    });
+
+    // Pipe du flux audio API vers ffmpeg stdin
+    response.body.pipe(ffmpeg.stdin);
+
+    // Pipe sortie ffmpeg vers réponse HTTP
+    ffmpeg.stdout.pipe(res);
+
   } catch (error) {
-    console.error(`[${new Date().toISOString()}] TTS processing error:`, error);
+    console.error('Error in TTS streaming:', error.message);
     if (!res.headersSent) {
-      res.status(500).json({
-        message: "Error processing text-to-speech request",
-        error: error.message,
-      });
+      res.status(500).json({ message: 'Internal Server Error' });
     }
   }
 };
 
-app.post("/text-to-speech-stream", handleTextToSpeech);
+app.post('/text-to-speech-stream', handleTextToSpeech);
 
-const port = process.env.PORT || DEFAULT_PORT;
+const port = process.env.PORT || 6003;
 app.listen(port, () => {
-  console.log(`Coqui TTS service listening on port ${port}`);
+  console.log(`Coqui TTS proxy listening on port ${port}`);
 });
