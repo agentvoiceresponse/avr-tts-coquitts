@@ -1,6 +1,6 @@
 {
   "name": "avr-tts-coquitts",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Agent Voice Response <info@agentvoiceresponse.com>",
   "description": "This repository provides a text-to-speech service using Coqui TTS API integrated with the Agent Voice Response system.",
   "main": "index.js",
@@ -16,11 +16,13 @@
     "url": "https://github.com/agentvoiceresponse/avr-tts-coquitts.git"
   },
   "dependencies": {
-    "dotenv": "^16.4.5",
-    "express": "^4.21.0"
+    "@alexanderolsen/libsamplerate-js": "^2.1.2",
+    "axios": "^1.13.2",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.7"
+    "nodemon": "^3.1.11"
   },
   "contributors": [
     {
